@@ -2,11 +2,11 @@ package router
 
 import (
 	"controlDeviceServer/internal/config"
+	"controlDeviceServer/internal/router/handlers"
 	"controlDeviceServer/internal/storage/sqlite"
 	"log/slog"
 	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,27 +30,15 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 			slog.Int("errors", len(c.Errors)),
 		)
 	})
-	corsConfig := cors.Config{
-		AllowOrigins:     []string{"https://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With", "Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers", "Access-Control-Allow-Credentials"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           24 * time.Hour,
+	tables := r.Group("/tables")
+	{
+		tables.GET("", handlers.NewHandlers(storage, log).Tables)
+		tables.POST("/current_analyzers", handlers.NewHandlers(storage, log).InsertCurrentAnalyzer)
+		tables.POST("/controllers", handlers.NewHandlers(storage, log).InsertController)
+		tables.POST("/inputmodules", handlers.NewHandlers(storage, log).InsertInputModule)
+		tables.POST("/lcds", handlers.NewHandlers(storage, log).InsertLCD)
+		tables.POST("/shields", handlers.NewHandlers(storage, log).InsertShield)
 	}
-	r.Use(cors.New(corsConfig))
-	/*
-		r.OPTIONS("/*path", func(c *gin.Context) {
-			if c.Request.Method == "OPTIONS" {
-				c.Header("Access-Control-Allow-Origin", "https://localhost:3000")
-				c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS")
-				c.Header("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization,X-Requested-With,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers,Access-Control-Allow-Credentials")
-				c.Header("Access-Control-Allow-Credentials", "true")
-				c.Status(204)
-				return
-			}
-			c.Next()
-		})*/
 
 	log.Info("starting HTTP server",
 		slog.String("port", cfg.HTTPServer.Address))
