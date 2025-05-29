@@ -1,6 +1,7 @@
 package main
 
 import (
+	"controlDeviceServer/internal/client"
 	"controlDeviceServer/internal/config"
 	"controlDeviceServer/internal/router"
 	"controlDeviceServer/internal/storage/sqlite"
@@ -9,6 +10,7 @@ import (
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/robfig/cron/v3"
 )
 
 const (
@@ -27,6 +29,8 @@ func main() {
 	storage := InitStorage(cfg, log)
 	//init router
 	router := router.SetupRouter(storage, log, cfg)
+	log.Info("stating GoogleSyncScheduler")
+	startGoogleSyncScheduler(cfg, log)
 	//run server
 	log.Info("stating server", slog.String("address", cfg.HTTPServer.Address))
 	if err := router.Run(cfg.HTTPServer.Address); err != nil {
@@ -68,4 +72,24 @@ func InitStorage(cfg *config.Config, log *slog.Logger) *sqlite.Storage {
 		os.Exit(1)
 	}
 	return storage
+}
+
+func startGoogleSyncScheduler(cfg *config.Config, log *slog.Logger) {
+	c := cron.New()
+	_, err := c.AddFunc("@every 1m", func() {
+		log.Info("Syncing with Google Apps Script...")
+		resp, err := client.SendToGoogleScript(cfg.GoogleAppScripts+"?path=sync/history", map[string]string{
+			"from": "Go server",
+		})
+		if err != nil {
+			log.Error("Failed to send to Google Script", "error", err)
+			return
+		}
+		log.Info("Google Apps Script response", "body", string(resp))
+		client.HandleChanges(resp, log)
+	})
+	if err != nil {
+		return
+	}
+	c.Start()
 }

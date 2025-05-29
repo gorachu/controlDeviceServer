@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	_ "controlDeviceServer/internal/storage/sqlite"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -69,4 +72,38 @@ func (h *Handler) insertGeneric(c *gin.Context, insertFunc func(map[string]inter
 		"inserted": successCount,
 		"total":    len(rows),
 	})
+}
+
+func sendToGAS(row map[string]interface{}, entity string) error {
+	var tableName string
+	switch entity {
+	case "current analyzer":
+		tableName = "Current Analizator"
+	case "input module":
+		tableName = "InputModule"
+	case "lcd":
+		tableName = "LCD"
+	case "shield":
+		tableName = "ШКАФЫ"
+	case "controller":
+		tableName = "Контроллеры Digicity"
+	}
+	url := "https://script.google.com/macros/s/AKfycby6ydCgUWUxwh2a33ip7PgQPeMcZ7hM5zl7zX5LGlQk7PZT34o7F-_EUw69hoPQjVtbCQ/exec?path=tables/" + tableName
+	payload, err := json.Marshal(row)
+	if err != nil {
+		return fmt.Errorf("failed to marshal row: %w", err)
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("GAS request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("GAS responded with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
 }

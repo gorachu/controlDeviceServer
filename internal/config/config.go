@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	Env           string `yaml:"env" env-default:"local"`
-	StoragePath   string `yaml:"storage_path" env-required:"true"`
-	HTTPServer    `yaml:"http_server"`
-	PublicAddress string `yaml:"public_address"`
+	Env              string `yaml:"env" env-default:"local"`
+	StoragePath      string `yaml:"storage_path" env-required:"true"`
+	HTTPServer       `yaml:"http_server"`
+	PublicAddress    string `yaml:"public_address"`
+	GoogleAppScripts string `yaml:"google_app_scripts"`
 }
 
 type HTTPServer struct {

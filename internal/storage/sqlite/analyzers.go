@@ -14,7 +14,12 @@ func (s *Storage) InsertCurrentAnalyzer(row map[string]interface{}) error {
 			firmware,
 			inspector,
 			comment
-		) VALUES (?, ?, ?, ?, ?);
+		) VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT(number_in_list) DO UPDATE SET
+		type = excluded.type,
+		firmware = excluded.firmware,
+		inspector = excluded.inspector,
+		comment = excluded.comment;
 	`
 
 	get := func(k string) string {

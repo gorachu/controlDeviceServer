@@ -42,9 +42,5 @@ func SetupRouter(storage *sqlite.Storage, log *slog.Logger, cfg *config.Config) 
 
 	log.Info("starting HTTP server",
 		slog.String("port", cfg.HTTPServer.Address))
-	if err := r.Run(cfg.HTTPServer.Address); err != nil {
-		log.Error("failed to start HTTP server", "error", err)
-		return nil
-	}
 	return r
 }

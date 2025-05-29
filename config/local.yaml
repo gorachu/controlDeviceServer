@@ -1,5 +1,6 @@
 env: "local"
 storage_path: "./storage/storage.db"
+google_app_scripts: "https://script.google.com/macros/s/AKfycby6ydCgUWUxwh2a33ip7PgQPeMcZ7hM5zl7zX5LGlQk7PZT34o7F-_EUw69hoPQjVtbCQ/exec"
 http_server:
   address: "localhost:80"
   timeout: 4s

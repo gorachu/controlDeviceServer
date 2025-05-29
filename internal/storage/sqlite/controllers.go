@@ -16,6 +16,12 @@ INSERT INTO controllers (
     inspector,
     comment
 ) VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(number_in_list) DO UPDATE SET
+	imei = excluded.imei,                                        
+    type = excluded.type,
+    firmware = excluded.firmware,
+    inspector = excluded.inspector,
+    comment = excluded.comment;
 `
 	get := func(k string) string {
 		if v, ok := row[k]; ok && v != nil {
